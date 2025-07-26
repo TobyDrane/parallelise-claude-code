@@ -21,7 +21,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: '10'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -30,7 +30,7 @@ jobs:
         run: pnpm build
 
       - name: Lint and format check
-        run: pnpm ci
+        run: pnpm run ci
 
       - name: Run tests
         run: pnpm test 

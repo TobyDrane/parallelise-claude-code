@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "vitest"
+    "test": "vitest run --reporter=verbose --passWithNoTests"
   },
   "dependencies": {
     "ws": "^8.16.0",
