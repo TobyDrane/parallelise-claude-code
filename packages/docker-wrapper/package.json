@@ -1,0 +1,17 @@
+{
+  "name": "@claude-code-docker/docker-wrapper",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "docker:build": "docker build -t claude-code-wrapper .",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "ws": "^8.16.0",
+    "pino": "^8.17.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0"
+  }
+}

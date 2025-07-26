@@ -1,0 +1,33 @@
+{
+  "name": "claude-code-docker",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Docker wrapper for Claude Code with real-time log streaming",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "check": "biome check --write",
+    "format": "biome format --write",
+    "lint": "biome lint --write",
+    "ci": "biome ci",
+    "prepare": "husky",
+    "docker:build": "./scripts/build-docker.sh",
+    "cli": "pnpm --filter @claude-code-docker/cli run start"
+  },
+  "lint-staged": {
+    "*.{js,ts,json}": ["biome check --write --files-ignore-unknown=true"]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^20.11.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
