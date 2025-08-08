@@ -1,6 +1,6 @@
-# @parallelise-claude-code/websocket-server
+# Parallelise Claude Code - WebSocket Server
 
-A real-time WebSocket server for streaming logs from Claude Code Docker containers.
+A real-time WebSocket server for streaming logs from Claude Code Docker containers in the Parallelise Claude Code system.
 
 ## Overview
 
