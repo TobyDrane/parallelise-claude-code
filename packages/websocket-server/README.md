@@ -1,21 +1,10 @@
-# Parallelise Claude Code - WebSocket Server
+# WebSocket Server
 
-A real-time WebSocket server for streaming logs from Claude Code Docker containers in the Parallelise Claude Code system.
+Real-time communication hub for streaming logs and coordinating Claude Code Docker containers.
 
-## Overview
+## Quick Start
 
-This WebSocket server provides real-time log streaming capabilities for the Claude Code Docker project. It enables clients to receive live logs from Docker containers running Claude Code sessions, allowing for better monitoring and debugging experiences.
-
-## Features
-
-- **Real-time log streaming** via WebSocket connections
-- **Session management** for multiple concurrent Claude Code sessions  
-- **Connection authentication** and authorization
-- **Connection monitoring** and health checks
-- **High performance** with minimal latency
-- **Structured logging** with Pino
-
-## Installation
+### Start the Server
 
 ```bash
 # Install dependencies
@@ -28,390 +17,118 @@ pnpm build
 pnpm start
 ```
 
-## Development
+The server will be available at `ws://localhost:8080`
+
+### Development Mode
 
 ```bash
-# Start in development mode with hot reload
 pnpm dev
 ```
 
 ## Configuration
 
-Configure the server using environment variables:
+Set environment variables to configure the server:
 
-```env
-# Server Configuration
-PORT=8080
-HOST=0.0.0.0
+```bash
+# Server settings
+export PORT=8080
+export HOST=0.0.0.0
 
-# WebSocket Configuration
-WS_PING_INTERVAL=30000
-WS_PING_TIMEOUT=5000
+# Authentication
+export AUTH_TOKEN=your-secure-token
 
-# Session Configuration
-SESSION_TIMEOUT=300000
-MAX_SESSIONS=100
+# Connection settings
+export HEARTBEAT_INTERVAL=30000  # 30 seconds
+export SESSION_TIMEOUT=300000    # 5 minutes
+export MAX_SESSIONS=100
 
 # Logging
-LOG_LEVEL=info
+export LOG_LEVEL=info
 ```
 
-## API Reference
+## Usage
 
-### WebSocket Connection
-
-Connect to the WebSocket server:
+### Connect to the Server
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8080');
+const ws = new WebSocket('ws://localhost:8080?token=your-secure-token');
 ```
 
 ### Message Protocol
 
-#### Client → Server Messages
-
-**Subscribe to Session Logs**
+**Subscribe to container logs:**
 ```json
 {
   "type": "subscribe",
-  "sessionId": "session-123",
+  "containerID": "container-123",
   "auth": {
     "token": "your-auth-token"
   }
 }
 ```
 
-**Unsubscribe from Session**
-```json
-{
-  "type": "unsubscribe", 
-  "sessionId": "session-123"
-}
-```
-
-**Ping**
-```json
-{
-  "type": "ping"
-}
-```
-
-#### Server → Client Messages
-
-**Log Stream**
+**Receive log messages:**
 ```json
 {
   "type": "log",
-  "sessionId": "session-123",
-  "timestamp": "2024-01-26T13:45:30.123Z",
-  "level": "info",
-  "message": "Container started successfully",
+  "containerID": "container-123",
+  "timestamp": "2024-01-01T00:00:00Z",
   "data": {
-    "containerId": "abc123",
-    "stage": "startup"
+    "level": "info",
+    "message": "Repository cloned successfully"
   }
 }
 ```
 
-**Session Status**
+**Status updates:**
 ```json
 {
   "type": "status",
-  "sessionId": "session-123", 
-  "status": "running|stopped|error",
-  "metadata": {
-    "containerId": "abc123",
-    "startTime": "2024-01-26T13:45:00.000Z"
+  "containerID": "container-123",
+  "timestamp": "2024-01-01T00:00:00Z",
+  "data": {
+    "status": "running",
+    "message": "Executing Claude Code task"
   }
 }
 ```
 
-**Error**
-```json
-{
-  "type": "error",
-  "code": "UNAUTHORIZED|SESSION_NOT_FOUND|INVALID_MESSAGE",
-  "message": "Detailed error message",
-  "sessionId": "session-123"
-}
-```
+## Features
 
-**Pong**
-```json
-{
-  "type": "pong"
-}
-```
+- **Real-time Streaming** - Live log and status updates
+- **Session Management** - Handle multiple concurrent containers
+- **Authentication** - Token-based connection security
+- **Health Monitoring** - Automatic connection cleanup
+- **Structured Logging** - JSON-formatted logs with Pino
 
-## Usage Examples
+## Message Types
 
-### Basic Client Connection
+- `log` - Log messages from containers
+- `status` - Container status updates (starting, running, completed, error)
+- `heartbeat` - Connection health checks
+- `complete` - Task completion notifications
+- `error` - Error messages and notifications
 
-```javascript
-const WebSocket = require('ws');
-
-const ws = new WebSocket('ws://localhost:8080');
-
-ws.on('open', () => {
-  console.log('Connected to WebSocket server');
-  
-  // Subscribe to a session
-  ws.send(JSON.stringify({
-    type: 'subscribe',
-    sessionId: 'my-session-123',
-    auth: { token: 'my-auth-token' }
-  }));
-});
-
-ws.on('message', (data) => {
-  const message = JSON.parse(data);
-  
-  switch (message.type) {
-    case 'log':
-      console.log(`[${message.sessionId}] ${message.message}`);
-      break;
-    case 'status':
-      console.log(`Session ${message.sessionId} status: ${message.status}`);
-      break;
-    case 'error':
-      console.error(`Error: ${message.message}`);
-      break;
-  }
-});
-
-ws.on('close', () => {
-  console.log('Disconnected from WebSocket server');
-});
-```
-
-### React Hook for Log Streaming
-
-```typescript
-import { useEffect, useState } from 'react';
-
-interface LogEntry {
-  sessionId: string;
-  timestamp: string;
-  level: string;
-  message: string;
-  data?: any;
-}
-
-export function useLogStream(sessionId: string, authToken: string) {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [connected, setConnected] = useState(false);
-
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8080');
-    
-    ws.onopen = () => {
-      setConnected(true);
-      ws.send(JSON.stringify({
-        type: 'subscribe',
-        sessionId,
-        auth: { token: authToken }
-      }));
-    };
-
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'log') {
-        setLogs(prev => [...prev, message]);
-      }
-    };
-
-    ws.onclose = () => {
-      setConnected(false);
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [sessionId, authToken]);
-
-  return { logs, connected };
-}
-```
-
-### Bash/Terminal Connection Guide
-
-You can connect to the WebSocket server directly from the terminal using various tools:
-
-#### Using `websocat` (Recommended)
-
-Install websocat:
-```bash
-# macOS
-brew install websocat
-
-# Linux
-cargo install websocat
-
-# Or download binary from https://github.com/vi/websocat/releases
-```
-
-Connect and subscribe to a session:
-```bash
-# Basic connection
-websocat ws://localhost:8080
-
-# Subscribe to a session (type this after connecting)
-{"type":"subscribe","sessionId":"session-123","auth":{"token":"your-token"}}
-
-# Using echo to send messages
-echo '{"type":"subscribe","sessionId":"session-123","auth":{"token":"your-token"}}' | websocat ws://localhost:8080
-
-# Pretty print JSON responses
-websocat ws://localhost:8080 | jq .
-
-# Send ping and listen for logs
-(echo '{"type":"subscribe","sessionId":"session-123","auth":{"token":"your-token"}}'; cat) | websocat ws://localhost:8080 | jq .
-```
-
-#### Using `wscat` (Node.js)
-
-Install wscat:
-```bash
-npm install -g wscat
-```
-
-Connect and interact:
-```bash
-# Connect to server
-wscat -c ws://localhost:8080
-
-# After connection, type:
-> {"type":"subscribe","sessionId":"session-123","auth":{"token":"your-token"}}
-
-# Send ping
-> {"type":"ping"}
-
-# Unsubscribe
-> {"type":"unsubscribe","sessionId":"session-123"}
-```
-
-#### Using `curl` (WebSocket upgrade)
-
-Test WebSocket endpoint availability:
-```bash
-# Check if WebSocket upgrade is supported
-curl -i -N \
-  -H "Connection: Upgrade" \
-  -H "Upgrade: websocket" \
-  -H "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==" \
-  -H "Sec-WebSocket-Version: 13" \
-  http://localhost:8080
-
-# Expected response should include:
-# HTTP/1.1 101 Switching Protocols
-# Upgrade: websocket
-# Connection: Upgrade
-```
-
-#### Using a Bash Function
-
-Create a reusable function for WebSocket testing:
-```bash
-# Add to ~/.bashrc or ~/.zshrc
-ws_test() {
-  local session_id="${1:-test-session}"
-  local token="${2:-test-token}"
-  local server="${3:-ws://localhost:8080}"
-  
-  echo "Connecting to $server with session: $session_id"
-  
-  (
-    echo "{\"type\":\"subscribe\",\"sessionId\":\"$session_id\",\"auth\":{\"token\":\"$token\"}}"
-    # Keep connection alive
-    while true; do
-      sleep 30
-      echo '{"type":"ping"}'
-    done
-  ) | websocat "$server" | while read -r line; do
-    echo "$(date '+%Y-%m-%d %H:%M:%S') | $line" | jq -R 'fromjson? // .'
-  done
-}
-
-# Usage
-ws_test "my-session-123" "my-auth-token"
-ws_test "session-456" "token-789" "ws://remote-server:8080"
-```
-
-#### Automated Testing Script
+## Development
 
 ```bash
-#!/bin/bash
-# test-websocket.sh
+# Install dependencies
+pnpm install
 
-SERVER="ws://localhost:8080"
-SESSION_ID="test-session-$(date +%s)"
-AUTH_TOKEN="test-token"
+# Start with hot reload
+pnpm dev
 
-echo "Testing WebSocket server at $SERVER"
+# Build for production
+pnpm build
 
-# Test connection and subscription
-echo '{"type":"subscribe","sessionId":"'$SESSION_ID'","auth":{"token":"'$AUTH_TOKEN'"}}' | \
-  timeout 5 websocat "$SERVER" | \
-  while read -r line; do
-    echo "Received: $line"
-    
-    # Parse message type
-    msg_type=$(echo "$line" | jq -r '.type // empty')
-    
-    case "$msg_type" in
-      "log")
-        echo "✓ Log message received"
-        ;;
-      "status")
-        echo "✓ Status update received"
-        ;;
-      "error")
-        echo "✗ Error: $(echo "$line" | jq -r '.message')"
-        exit 1
-        ;;
-      *)
-        echo "? Unknown message type: $msg_type"
-        ;;
-    esac
-  done
-
-echo "WebSocket test completed"
+# Run tests
+pnpm test
 ```
 
 ## Architecture
 
-```
-┌─────────────────┐    WebSocket    ┌─────────────────┐
-│   CLI Client    │◄───────────────►│ WebSocket Server│
-└─────────────────┘                 └─────────────────┘
-                                            │
-┌─────────────────┐    WebSocket            │
-│   Web Client    │◄───────────────────────►│
-└─────────────────┘                         │
-                                            │
-┌─────────────────┐    Log Stream           │
-│ Docker Container│────────────────────────►│
-│  (Claude Code)  │                         │
-└─────────────────┘                         │
-                                            │
-┌─────────────────┐    Log Stream           │
-│ Docker Container│────────────────────────►│ 
-│  (Claude Code)  │                         │
-└─────────────────┘                         │
-```
-
-## Integration
-
-This WebSocket server is designed to work with:
-
-- **[@parallelise-claude-code/cli](../cli/)** - CLI tool for managing containers
-- **[@parallelise-claude-code/docker-wrapper](../docker-wrapper/)** - Container wrapper that streams logs
-
-## Scripts
-
-- `pnpm dev` - Start development server with hot reload
-- `pnpm build` - Build the TypeScript project
-- `pnpm start` - Start the production server
-- `pnpm test` - Run tests
-- `pnpm lint` - Run linting
-- `pnpm format` - Format code
+The server manages:
+- **WebSocket connections** from CLI clients and Docker containers
+- **Session tracking** for active containers
+- **Message routing** between containers and monitoring clients
+- **Connection health** with automatic cleanup
