@@ -37,7 +37,7 @@ docker run --rm \
 - `ALLOWED_TOOLS` - Comma-separated list of allowed tools
 - `DISALLOWED_TOOLS` - Comma-separated list of disallowed tools  
 - `MAX_TURNS` - Maximum conversation turns
-- `MODEL` - Claude model to use (default: `claude-3-5-sonnet-20241022`)
+- `MODEL` - Claude model to use (default: `claude-4-sonnet`)
 - `SYSTEM_PROMPT` - Custom system prompt
 
 ## Example with Private Repository

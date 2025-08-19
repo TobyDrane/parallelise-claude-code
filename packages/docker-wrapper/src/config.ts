@@ -75,7 +75,7 @@ export function loadConfig(): Config {
   const appendSystemPrompt = process.env.APPEND_SYSTEM_PROMPT;
   const claudeEnv = process.env.CLAUDE_ENV;
   const fallbackModel = process.env.FALLBACK_MODEL;
-  const model = process.env.MODEL;
+  const model = process.env.MODEL || 'claude-4-sonnet';
 
   return {
     repoUrl,
