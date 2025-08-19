@@ -241,7 +241,6 @@ parallelise-claude-code/
 │   ├── websocket-server/    # WebSocket communication hub
 │   └── docker-wrapper/      # Containerized execution environment
 ├── scripts/                 # Build and deployment scripts
-├── k8s/                    # Kubernetes deployment configs
 └── README.md               # This file
 ```
 
@@ -301,20 +300,13 @@ services:
       - websocket-server
 ```
 
-### Kubernetes
-
-See `k8s/` directory for Kubernetes deployment configurations:
-
-- `websocket-server.yaml`: WebSocket server deployment
-- `job-template.yaml`: Claude Code job template
-
 ### Production Considerations
 
 - **Resource Limits**: Set appropriate CPU/memory limits
 - **Security**: Use non-root users, read-only filesystems
 - **Networking**: Configure proper network policies
 - **Monitoring**: Set up logging aggregation and metrics
-- **Scaling**: Use horizontal pod autoscaling for WebSocket server
+- **Scaling**: Scale WebSocket server instances as needed
 
 ## 🔒 Security
 
